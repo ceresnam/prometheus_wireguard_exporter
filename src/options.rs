@@ -1,3 +1,5 @@
+use std::env;
+use std::path::PathBuf;
 use clap::parser::ValuesRef;
 
 #[derive(Debug, Clone)]
@@ -18,8 +20,13 @@ impl Options {
             prepend_sudo: *matches.get_one("prepend_sudo").unwrap_or(&false),
             separate_allowed_ips: *matches.get_one("separate_allowed_ips").unwrap_or(&false),
             extract_names_config_files: matches
-                .get_many("extract_names_config_files")
-                .map(|e: ValuesRef<'_, String>| e.into_iter().map(|a| a.to_owned()).collect()),
+                .get_many::<String>("extract_names_config_files")
+                .map(|values_ref| {
+                    values_ref
+                        .flat_map(|s| env::split_paths(s))
+                        .map(|p: PathBuf| p.to_string_lossy().into_owned())
+                        .collect::<Vec<String>>()
+                }),
             interfaces: matches
                 .get_many("interfaces")
                 .map(|e: ValuesRef<'_, String>| e.into_iter().map(|a| a.to_string()).collect()),
